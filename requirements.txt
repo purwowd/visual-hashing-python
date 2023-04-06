@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+jinja2
+python-multipart
+numpy
+chance
+Pillow
+matplotlib
+opencv-python
