@@ -9,14 +9,16 @@ from PIL import Image
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 import cv2
+from scipy.interpolate import CubicSpline
+
 
 app = FastAPI()
 
 templates = Jinja2Templates(directory="templates")
 
 
-WIDTH = 1000
-HEIGHT = 1000
+WIDTH = 500
+HEIGHT = 500
 CELL_SIZE = -1
 
 @app.get("/", response_class=HTMLResponse)
@@ -46,32 +48,7 @@ def generate_colormap(rng, n_points):
     rng.shuffle(idx)
     return colormap(idx)
 
-
-def draw_visual_hash(points, colors):
-    fig, ax = plt.subplots()
-    ax.scatter(*zip(*points), s=20, c=colors, marker='.')
-
-    ax.set_xticks(range(0, WIDTH, CELL_SIZE))
-    ax.set_yticks(range(0, HEIGHT, CELL_SIZE))
-    plt.grid()
-
-    ax.set_xticklabels([])
-    ax.set_yticklabels([])
-    ax.xaxis.set_ticks_position('none')
-    ax.yaxis.set_ticks_position('none')
-
-    plt.box(False)
-
-    buf = BytesIO()
-    fig.savefig(buf, format='png', dpi=80)
-    plt.close(fig)
-    buf.seek(0)
-    img = np.frombuffer(buf.getvalue(), dtype=np.uint8)
-    img = cv2.imdecode(img, cv2.IMREAD_UNCHANGED)[:, :, :3]
-    return img
-
-
-def generate_visual_hash_points(name):
+def generate_visual_hash_points_and_draw_curved(name):
     rng = np.random.default_rng(hash(name) % (2**32))
 
     def rand():
@@ -147,12 +124,54 @@ def generate_visual_hash_points(name):
     size = 4620
     colors = generate_colormap(rng, size)
 
-    return points, colors
+    x, y = zip(*points)
+    x = np.array(x)
+    y = np.array(y)
+
+    x = np.concatenate((x, [x[0]]))
+    y = np.concatenate((y, [y[0]]))
+
+    t = np.linspace(0, 1, len(x))
+    cs_x = CubicSpline(t, x, bc_type='periodic')
+    cs_y = CubicSpline(t, y, bc_type='periodic')
+
+    num_points = 5000
+    t_new = np.linspace(0, 1, num_points)
+    x_smooth = cs_x(t_new)
+    y_smooth = cs_y(t_new)
+
+    fig, ax = plt.subplots()
+    
+    ax.set_facecolor('black')
+    fig.set_facecolor('black')
+
+    for i in range(len(x_smooth) - 1):
+        ax.plot(x_smooth[i:i + 2], y_smooth[i:i + 2], c=colors[i % len(colors)], lw=2)
+
+    ax.set_xticks(range(0, WIDTH, CELL_SIZE))
+    ax.set_yticks(range(0, HEIGHT, CELL_SIZE))
+    plt.grid()
+
+    ax.set_xticklabels([])
+    ax.set_yticklabels([])
+    ax.xaxis.set_ticks_position('none')
+    ax.yaxis.set_ticks_position('none')
+
+    plt.box(False)
+
+    buf = BytesIO()
+    fig.savefig(buf, format='png', dpi=80)
+    plt.close(fig)
+    buf.seek(0)
+    img = np.frombuffer(buf.getvalue(), dtype=np.uint8)
+    img = cv2.imdecode(img, cv2.IMREAD_UNCHANGED)[:, :, :3]
+
+    return img
+    
 
 @app.post("/generate-plot", response_class=HTMLResponse)
 async def generate_visual_hash(request: Request, name: str = Form(...)):
-    points, colors = generate_visual_hash_points(name)
-    img = draw_visual_hash(points, colors)
+    img = generate_visual_hash_points_and_draw_curved(name)
 
     img_pil = Image.fromarray(img)
 
