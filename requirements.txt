@@ -7,3 +7,4 @@ chance
 Pillow
 matplotlib
 opencv-python
+scipy

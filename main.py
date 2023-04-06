@@ -7,6 +7,7 @@ import base64
 from io import BytesIO
 from PIL import Image
 import matplotlib.pyplot as plt
+import matplotlib.cm as cm
 import cv2
 
 app = FastAPI()
@@ -23,9 +24,32 @@ async def home(request: Request):
     return templates.TemplateResponse("index.html", {"request": request, "image": None})
 
 
-def draw_visual_hash(points):
+def random_colormap(rng):
+    colormaps = [
+        'viridis', 'plasma', 'inferno', 'magma', 'cividis',
+        'Greys', 'Purples', 'Blues', 'Greens', 'Oranges', 'Reds',
+        'YlOrBr', 'YlOrRd', 'OrRd', 'PuRd', 'RdPu', 'BuPu', 'GnBu', 'PuBu',
+        'YlGnBu', 'PuBuGn', 'BuGn', 'YlGn',
+        'PiYG', 'PRGn', 'BrBG', 'PuOr', 'RdGy', 'RdBu', 'RdYlBu', 'RdYlGn', 'Spectral',
+        'coolwarm', 'bwr', 'seismic',
+        'twilight', 'twilight_shifted', 'hsv',
+        'Pastel1', 'Pastel2', 'Paired', 'Accent', 'Dark2', 'Set1', 'Set2', 'Set3',
+        'tab10', 'tab20', 'tab20b', 'tab20c',
+    ]
+    return rng.choice(colormaps)
+
+
+def generate_colormap(rng, n_points):
+    colormap_name = random_colormap(rng)
+    colormap = cm.get_cmap(colormap_name)
+    idx = np.linspace(0, 1, n_points)
+    rng.shuffle(idx)
+    return colormap(idx)
+
+
+def draw_visual_hash(points, colors):
     fig, ax = plt.subplots()
-    ax.scatter(*zip(*points), s=20, c='black', marker='.')
+    ax.scatter(*zip(*points), s=20, c=colors, marker='.')
 
     ax.set_xticks(range(0, WIDTH, CELL_SIZE))
     ax.set_yticks(range(0, HEIGHT, CELL_SIZE))
@@ -120,13 +144,15 @@ def generate_visual_hash_points(name):
         points.append((x * 110 + 200, y * 110 + 200))
         r += step
 
-    return points
+    size = 4620
+    colors = generate_colormap(rng, size)
 
+    return points, colors
 
 @app.post("/generate-plot", response_class=HTMLResponse)
 async def generate_visual_hash(request: Request, name: str = Form(...)):
-    points = generate_visual_hash_points(name)
-    img = draw_visual_hash(points)
+    points, colors = generate_visual_hash_points(name)
+    img = draw_visual_hash(points, colors)
 
     img_pil = Image.fromarray(img)
 
