@@ -105,8 +105,12 @@
           <button type="submit" style="margin-left:0.25rem">Download</button>
         `;
         downloadBtnContainer.appendChild(downloadBtn);
+
         const generateBtn = document.querySelector(".generate");
         generateBtn.style.marginRight = "0.25rem";
+
+        const inputBox = document.getElementById("name");
+        inputBox.value = "{{ name }}";
       </script>
       {% endif %}
     </div>
