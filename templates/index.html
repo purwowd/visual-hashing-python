@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Visual Hashing</title>
+    <title>Visual Hashing Python</title>
     <style>
       body {
         display: flex;
@@ -20,6 +20,7 @@
       h1 {
         font-size: 1.5rem;
         text-align: center;
+        margin-bottom: 1rem;
       }
 
       form {
@@ -30,16 +31,25 @@
         margin-bottom: 1rem;
       }
 
+      .buttons-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 100%;
+      }
+
       input {
         padding: 0.5rem;
         font-size: 1.2rem;
         border-radius: 5px;
         border: 1px solid #ccc;
         outline: none;
+        width: 120%;
+        max-width: 500px;
+        margin-bottom: 1rem;
       }
 
       button {
-        margin-top: 1rem;
         padding: 0.5rem;
         font-size: 1rem;
         border-radius: 5px;
@@ -47,6 +57,10 @@
         background-color: #000000;
         color: white;
         cursor: pointer;
+      }
+
+      button.generate {
+        margin-right: 0rem;
       }
 
       button:hover {
@@ -59,16 +73,42 @@
         margin: 0 auto;
         background-color: #eee;
       }
+
+      .img-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
     </style>
   </head>
   <body>
-    <h1>Visual Hashing Matplotlib</h1>
+    <h1>Visual Hashing</h1>
     <form action="/generate-plot" method="post">
       <input type="text" id="name" name="name" required />
-      <button type="submit">Generate Plot</button>
+      <div class="buttons-container">
+        <button class="generate" type="submit">Generate</button>
+        <span id="download-btn-container"></span>
+      </div>
     </form>
-    {% if image %}
-    <img src="{{ image }}" alt="Visual Hash" />
-    {% endif %}
+    <div class="img-container">
+      {% if image %}
+      <img src="{{ image }}" alt="Visual Hash" />
+      <script>
+        const downloadBtnContainer = document.getElementById(
+          "download-btn-container"
+        );
+        const downloadBtn = document.createElement("form");
+        downloadBtn.action = "/download-plot";
+        downloadBtn.method = "post";
+        downloadBtn.innerHTML = `
+          <input type="hidden" name="name" value="{{ name }}" />
+          <button type="submit" style="margin-left:0.25rem">Download</button>
+        `;
+        downloadBtnContainer.appendChild(downloadBtn);
+        const generateBtn = document.querySelector(".generate");
+        generateBtn.style.marginRight = "0.25rem";
+      </script>
+      {% endif %}
+    </div>
   </body>
 </html>

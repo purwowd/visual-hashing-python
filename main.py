@@ -1,6 +1,6 @@
 import numpy as np
 from fastapi import FastAPI, Request, Form
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, StreamingResponse
 
 from fastapi.templating import Jinja2Templates
 import base64
@@ -14,9 +14,10 @@ app = FastAPI()
 templates = Jinja2Templates(directory="templates")
 
 
-WIDTH = 1000
-HEIGHT = 1000
+WIDTH = 400
+HEIGHT = 400
 CELL_SIZE = -1
+NUM_POINTS = 50
 
 @app.get("/", response_class=HTMLResponse)
 async def home(request: Request):
@@ -24,19 +25,27 @@ async def home(request: Request):
 
 
 def draw_visual_hash(points):
-    fig, ax = plt.subplots()
-    ax.scatter(*zip(*points), s=20, c='black', marker='.')
+    fig, ax = plt.subplots(figsize=(6, 6))
+    ax.scatter(*zip(*points), s=35, c='black', marker='.')
 
-    ax.set_xticks(range(0, WIDTH, CELL_SIZE))
-    ax.set_yticks(range(0, HEIGHT, CELL_SIZE))
+    ax.set_xticks(np.arange(CELL_SIZE/2, WIDTH, CELL_SIZE))
+    ax.set_yticks(np.arange(CELL_SIZE/2, HEIGHT, CELL_SIZE))
     plt.grid()
 
     ax.set_xticklabels([])
     ax.set_yticklabels([])
-    ax.xaxis.set_ticks_position('none')
-    ax.yaxis.set_ticks_position('none')
+    ax.xaxis.set_ticks_position('both')
+    ax.yaxis.set_ticks_position('both')
 
     plt.box(False)
+
+    ax.set_xlim(0, WIDTH)
+    ax.set_ylim(0, HEIGHT)
+    ax.set_aspect('equal', 'box')
+
+    # watermark_text = "WATERMARK"
+    # ax.text(WIDTH/2, HEIGHT/2, watermark_text, fontsize=70, color='gray',
+    #         alpha=0.7, ha='center', va='center', rotation=30, zorder=3)
 
     buf = BytesIO()
     fig.savefig(buf, format='png', dpi=80)
@@ -137,4 +146,33 @@ async def generate_visual_hash(request: Request, name: str = Form(...)):
     img_base64 = base64.b64encode(buffer.read()).decode()
     img_data_url = f"data:image/png;base64,{img_base64}"
 
-    return templates.TemplateResponse("index.html", {"request": request, "image": img_data_url, "name": name})
+    return templates.TemplateResponse(
+        "index.html", {"request": request, "image": img_data_url, "name": name}
+    )
+
+
+@app.post("/download-plot")
+async def download_visual_hash(name: str = Form(...)):
+    points = generate_visual_hash_points(name)
+    img = draw_visual_hash(points)
+
+    img_pil = Image.fromarray(img)
+
+    buffer = BytesIO()
+    img_pil.save(buffer, format="PNG")
+    buffer.seek(0)
+
+    filename = name.lower().replace(" ", "-")
+
+    async def content_generator():
+        while True:
+            chunk = buffer.read(8192)
+            if not chunk:
+                break
+            yield chunk
+
+    return StreamingResponse(
+        content_generator(),
+        media_type="image/png",
+        headers={"Content-Disposition": f"attachment;filename={filename}_visual_hash.png"}
+    )
