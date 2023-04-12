@@ -67,13 +67,6 @@
         background-color: #3c3c3c;
       }
 
-      img {
-        max-width: 100%;
-        display: block;
-        margin: 0 auto;
-        background-color: #eee;
-      }
-
       .img-container {
         display: flex;
         justify-content: center;
@@ -92,8 +85,32 @@
     </form>
     <div class="img-container">
       {% if image %}
-      <img src="{{ image }}" alt="Visual Hash" />
+      <canvas id="visual-hash-canvas" width="400" height="400"></canvas>
       <script>
+        const rotationSpeed = 0.5; // Rotation speed in degrees per frame
+        const canvas = document.getElementById("visual-hash-canvas");
+        const ctx = canvas.getContext("2d");
+        const img = new Image();
+        img.src = "{{ image }}";
+
+        let rotation = 0;
+        img.onload = function () {
+          animate();
+        };
+
+        function animate() {
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          ctx.save();
+          ctx.translate(canvas.width / 2, canvas.height / 2);
+          ctx.rotate((rotation * Math.PI) / 180);
+          ctx.drawImage(img, -img.width / 2, -img.height / 2);
+          ctx.restore();
+
+          rotation += rotationSpeed;
+          rotation %= 360;
+          requestAnimationFrame(animate);
+        }
+
         const downloadBtnContainer = document.getElementById(
           "download-btn-container"
         );

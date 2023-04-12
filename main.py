@@ -25,11 +25,12 @@ async def home(request: Request):
 
 
 def draw_visual_hash(points):
-    fig, ax = plt.subplots(figsize=(6, 6))
-    ax.scatter(*zip(*points), s=35, c='black', marker='.')
+    points = np.array(points)
+    fig, ax = plt.subplots(figsize=(5, 5))
+    ax.plot(points[0:,0], points[:,1], c='black', linewidth=3, alpha=1, zorder=3, solid_capstyle='round')
 
-    ax.set_xticks(np.arange(CELL_SIZE/2, WIDTH, CELL_SIZE))
-    ax.set_yticks(np.arange(CELL_SIZE/2, HEIGHT, CELL_SIZE))
+    ax.set_xticks(np.arange(CELL_SIZE/3, WIDTH, CELL_SIZE))
+    ax.set_yticks(np.arange(CELL_SIZE/3, HEIGHT, CELL_SIZE))
     plt.grid()
 
     ax.set_xticklabels([])
@@ -57,7 +58,7 @@ def draw_visual_hash(points):
 
 
 def generate_visual_hash_points(name):
-    rng = np.random.default_rng(hash(name) % (2**32))
+    rng = np.random.default_rng(hash(name) % (3**33))
 
     def rand():
         return rng.random()
@@ -72,7 +73,7 @@ def generate_visual_hash_points(name):
     def fi():
         return rand() < 0.5
 
-    N = 7 if fi() else 11
+    N = 11 if fi() else 11
     size = 4620
     step = (2 * np.pi / size) * N
 
@@ -87,7 +88,7 @@ def generate_visual_hash_points(name):
         if fi():
             h[i] *= -1
 
-    ki = [1, 3, 5, 7, 9, 11]
+    ki = [1, 1, 3, 5, 7, 9, 11, 13, 15]
     gu = [0, 0, 2, 4, 6, 8, 10]
     q = np.zeros(8)
     s = [None] * 8
@@ -112,21 +113,21 @@ def generate_visual_hash_points(name):
             q[i] *= -1
         s[i] = np.cos if use_cos else np.sin
 
-    n = [1 if fi() else -1 for _ in range(3)]
+    n = [-1 if fi() else -1 for _ in range(3)]
 
     points = []
     r = 0
     for _ in range(size):
-        b = s[6](r * q[6] + s[3](r * q[3]) * h[5]) * n[0]
+        b = s[6](r * q[6] + s[-3](r * q[-3]) * h[5]) * n[0]
         a = 1 + b * h[0]
         d = s[7](r * q[7])
         e = -d
         d *= (2 - a) * n[1]
         e *= (2 - a) * n[2]
-        c = (s[4](r * q[4] + s[5](r * q[5]) * h[7]) / 4) * h[6] * (a - (1 - h[0]))
+        c = (s[4](r * q[4] + s[5](r * q[5]) * h[7]) / 4) * h[6] * (a - (1 + h[0]))
         x = np.sin(r * pr + c) * a + s[0][0](r * q[0]) * h[2] * d + s[1][0](r * q[1]) * h[3] * e
         y = np.cos(r * pr + c) * a + s[0][1](r * q[0]) * h[2] * d + s[1][1](r * q[1]) * h[3] * e
-        points.append((x * 110 + 200, y * 110 + 200))
+        points.append((x * 100 + 200, y * 100 + 200))
         r += step
 
     return points
