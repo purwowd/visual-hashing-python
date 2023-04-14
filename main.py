@@ -3,13 +3,18 @@ from fastapi import FastAPI, Request, Form
 from fastapi.responses import HTMLResponse, StreamingResponse
 
 from fastapi.templating import Jinja2Templates
+from fastapi.staticfiles import StaticFiles
 import base64
 from io import BytesIO
 from PIL import Image
 import matplotlib.pyplot as plt
 import cv2
+from faker import Faker
+fake = Faker()
 
 app = FastAPI()
+
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 templates = Jinja2Templates(directory="templates")
 
@@ -18,10 +23,6 @@ WIDTH = 400
 HEIGHT = 400
 CELL_SIZE = -1
 NUM_POINTS = 50
-
-@app.get("/", response_class=HTMLResponse)
-async def home(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request, "image": None})
 
 
 def draw_visual_hash(points):
@@ -131,6 +132,17 @@ def generate_visual_hash_points(name):
         r += step
 
     return points
+
+
+@app.get("/", response_class=HTMLResponse)
+async def home(request: Request):
+    return templates.TemplateResponse("index.html", {"request": request, "image": None})
+
+
+@app.get("/random-name")
+async def random_name():
+    name = fake.name()
+    return name
 
 
 @app.post("/generate-plot", response_class=HTMLResponse)

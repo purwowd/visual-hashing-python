@@ -5,74 +5,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Visual Hashing Python</title>
-    <style>
-      body {
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        font-family: sans-serif;
-        margin: 0;
-        padding: 0;
-        height: 100vh;
-      }
-
-      h1 {
-        font-size: 1.5rem;
-        text-align: center;
-        margin-bottom: 1rem;
-      }
-
-      form {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        margin-top: 1rem;
-        margin-bottom: 1rem;
-      }
-
-      .buttons-container {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        width: 100%;
-      }
-
-      input {
-        padding: 0.5rem;
-        font-size: 1.2rem;
-        border-radius: 5px;
-        border: 1px solid #ccc;
-        outline: none;
-        width: 120%;
-        max-width: 500px;
-        margin-bottom: 1rem;
-      }
-
-      button {
-        padding: 0.5rem;
-        font-size: 1rem;
-        border-radius: 5px;
-        border: none;
-        background-color: #000000;
-        color: white;
-        cursor: pointer;
-      }
-
-      button.generate {
-        margin-right: 0rem;
-      }
-
-      button:hover {
-        background-color: #3c3c3c;
-      }
-
-      .img-container {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-      }
-    </style>
+    <link rel="stylesheet" href="/static/css/style.css" />
   </head>
   <body>
     <h1>Visual Hashing</h1>
@@ -80,56 +13,45 @@
       <input type="text" id="name" name="name" required />
       <div class="buttons-container">
         <button class="generate" type="submit">Generate</button>
+        <button class="random-name" id="random-name-btn" type="button">
+          Random name
+        </button>
         <span id="download-btn-container"></span>
       </div>
     </form>
     <div class="img-container">
       {% if image %}
-      <canvas id="visual-hash-canvas" width="400" height="400"></canvas>
-      <script>
-        const rotationSpeed = 0.5; // Rotation speed in degrees per frame
-        const canvas = document.getElementById("visual-hash-canvas");
-        const ctx = canvas.getContext("2d");
-        const img = new Image();
-        img.src = "{{ image }}";
-
-        let rotation = 0;
-        img.onload = function () {
-          animate();
-        };
-
-        function animate() {
-          ctx.clearRect(0, 0, canvas.width, canvas.height);
-          ctx.save();
-          ctx.translate(canvas.width / 2, canvas.height / 2);
-          ctx.rotate((rotation * Math.PI) / 180);
-          ctx.drawImage(img, -img.width / 2, -img.height / 2);
-          ctx.restore();
-
-          rotation += rotationSpeed;
-          rotation %= 360;
-          requestAnimationFrame(animate);
-        }
-
-        const downloadBtnContainer = document.getElementById(
-          "download-btn-container"
-        );
-        const downloadBtn = document.createElement("form");
-        downloadBtn.action = "/download-plot";
-        downloadBtn.method = "post";
-        downloadBtn.innerHTML = `
-          <input type="hidden" name="name" value="{{ name }}" />
-          <button type="submit" style="margin-left:0.25rem">Download</button>
-        `;
-        downloadBtnContainer.appendChild(downloadBtn);
-
-        const generateBtn = document.querySelector(".generate");
-        generateBtn.style.marginRight = "0.25rem";
-
-        const inputBox = document.getElementById("name");
-        inputBox.value = "{{ name }}";
-      </script>
+      <canvas
+        id="visual-hash-canvas"
+        data-image="{{ image }}"
+        data-name="{{ name }}"
+        width="400"
+        height="400"
+      ></canvas>
       {% endif %}
     </div>
+    <script src="/static/js/main.js"></script>
+    <!-- Footer -->
+    <footer>
+      <p>
+        Created by
+        <a
+          href="https://github.com/purwowd"
+          target="_blank"
+          rel="noopener noreferrer"
+          >@purwowd</a
+        >
+      </p>
+      <p>
+        An implementation of
+        <a
+          href="https://github.com/gungunfebrianza/Visual-Hashing"
+          target="_blank"
+          rel="noopener noreferrer"
+          >Visual Hashing</a
+        >
+        using Python
+      </p>
+    </footer>
   </body>
 </html>
