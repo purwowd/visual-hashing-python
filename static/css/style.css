@@ -1,92 +1,537 @@
+/*
+ * The page follows the golden ratio too:
+ * - the form and artwork panels are 1 : phi wide;
+ * - the title is phi^2 times the body text;
+ * - every space is a Fibonacci number of pixels (8, 13, 21, 34, 55).
+ * The accent colours come from the palette of the mandala on show (set on <body> by the server
+ * and by main.js); these are the defaults before the first one.
+ */
+/* Cormorant Garamond (SIL Open Font License, see /static/fonts/OFL.txt), served from here rather
+   than a font service: Latin only, about 23 KB a style. */
+@font-face {
+  font-family: "Cormorant Garamond";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("/static/fonts/cormorant-garamond-500.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Cormorant Garamond";
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/static/fonts/cormorant-garamond-400-italic.woff2") format("woff2");
+}
+
+:root {
+  --phi: 1.618;
+  --space-1: 8px;
+  --space-2: 13px;
+  --space-3: 21px;
+  --space-4: 34px;
+  --space-5: 55px;
+
+  --text: #1d1d1f;
+  --muted: #6e6e73;
+  --border: #d2d2d7;
+  --border-hover: #b0b0b5;
+  --field-bg: #f5f5f7;
+  --field-focus-bg: #fff;
+  --card-bg: #fff;
+  --page-bg: #e9e9ec;
+  --secondary-bg: #fff;
+  --shadow: rgba(0, 0, 0, 0.15);
+  --accent: #002b5c;
+  --accent-2: #1a7f42;
+  --glow-0: transparent;
+  --glow-1: transparent;
+  --glow-2: transparent;
+
+  --control-height: 48px;
+  --radius: 13px;
+  --serif: "Cormorant Garamond", "Iowan Old Style", Georgia, serif;
+}
+
+/* Dark: the card becomes part of the night the mandala glows in. */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --text: #f2f2f4;
+    --muted: #9b9ba3;
+    --border: #34343c;
+    --border-hover: #4a4a54;
+    --field-bg: #1c1c22;
+    --field-focus-bg: #22222a;
+    --card-bg: #121216;
+    --page-bg: #050507;
+    --secondary-bg: #1c1c22;
+    --shadow: rgba(0, 0, 0, 0.6);
+    --accent: #3b5bdb;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
 body {
+  margin: 0;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-3) var(--space-2);
+  background: var(--page-bg);
+  color: var(--text);
+  font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  line-height: 1.5;
+}
+
+.card {
+  display: grid;
+  grid-template-columns: minmax(300px, 1fr) minmax(0, 1.618fr);
+  width: 100%;
+  max-width: 1100px;
+  border-radius: var(--space-3);
+  overflow: hidden;
+  background: var(--card-bg);
+  box-shadow: 0 var(--space-2) var(--space-5) var(--shadow);
+}
+
+/* Form panel */
+
+.panel-form {
   display: flex;
   flex-direction: column;
   justify-content: center;
-  align-items: center;
-  font-family: sans-serif;
-  margin: 0;
-  padding: 0;
-  height: 100vh;
+  gap: var(--space-4);
+  padding: var(--space-5) var(--space-4);
+}
+
+header {
+  text-align: center;
+}
+
+.mark {
+  margin: 0 0 var(--space-1);
+  font-family: var(--serif);
+  font-size: calc(1rem * var(--phi));
+  font-style: italic;
+  line-height: 1;
+  color: var(--accent);
+  transition: color 0.6s;
 }
 
 h1 {
-  font-size: 1.5rem;
-  text-align: center;
-  margin-bottom: 1rem;
+  margin: 0;
+  font-family: var(--serif);
+  font-size: calc(1rem * var(--phi) * var(--phi));
+  font-weight: 500;
+  line-height: 1.1;
+  letter-spacing: 0.01em;
 }
 
-form {
+.subtitle {
+  margin: var(--space-1) 0 0;
+  font-family: var(--serif);
+  font-size: 1.05rem;
+  font-style: italic;
+  color: var(--muted);
+  text-wrap: balance;
+}
+
+.controls {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  margin-top: 1rem;
-  margin-bottom: 1rem;
+  gap: var(--space-2);
 }
 
-.buttons-container {
+.field {
   display: flex;
-  justify-content: center;
-  align-items: center;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+/* Inputs and buttons share one height, radius and font, so every control lines up. */
+input:not([type="range"]),
+select,
+.btn {
   width: 100%;
+  height: var(--control-height);
+  margin: 0;
+  padding: 0 var(--space-2);
+  font: inherit;
+  font-size: 0.95rem;
+  border-radius: var(--radius);
 }
 
-input {
-  padding: 0.5rem;
-  font-size: 1.2rem;
-  border-radius: 5px;
-  border: 1px solid #ccc;
-  outline: none;
-  width: 120%;
-  max-width: 500px;
-  margin-bottom: 1rem;
+input:not([type="range"]),
+select {
+  border: 1px solid var(--border);
+  background-color: var(--field-bg);
+  color: var(--text);
+  transition: border-color 0.15s, background-color 0.15s, box-shadow 0.15s;
 }
 
-button {
-  padding: 0.5rem;
-  font-size: 1rem;
-  border-radius: 5px;
-  border: none;
-  background-color: #000000;
-  color: white;
+input::placeholder {
+  color: var(--muted);
+  opacity: 0.7;
+}
+
+select {
+  appearance: none;
+  padding-right: var(--space-4);
   cursor: pointer;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5l5 5 5-5' fill='none' stroke='%239b9ba3' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right var(--space-2) center;
 }
 
-button.generate {
-  margin-right: 0rem;
+input:not([type="range"]):hover,
+select:hover {
+  border-color: var(--border-hover);
 }
 
-button.random-name {
-  margin-left: 0.25rem;
+input:not([type="range"]):focus,
+select:focus {
+  outline: none;
+  border-color: var(--accent);
+  background-color: var(--field-focus-bg);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 20%, transparent);
 }
 
-button:hover {
-  background-color: #3c3c3c;
+/* Four buttons, all the same size, two by two. */
+.actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-2);
+  margin-top: var(--space-1);
 }
 
-.img-container {
-  display: flex;
-  justify-content: center;
+.btn {
+  position: relative;
+  display: inline-flex;
   align-items: center;
+  justify-content: center;
+  border: 1px solid transparent;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.6s, border-color 0.15s, color 0.15s, filter 0.15s, transform 0.1s;
+}
+
+.btn:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 35%, transparent);
+}
+
+.btn-primary {
+  background: var(--accent);
+  color: #fff;
+}
+
+.btn-accent {
+  background: var(--accent-2);
+  color: #fff;
+}
+
+.btn-primary:hover:not(:disabled),
+.btn-accent:hover:not(:disabled) {
+  filter: brightness(1.12);
+}
+
+.btn-secondary {
+  border-color: var(--border);
+  background: var(--secondary-bg);
+  color: var(--text);
+}
+
+.btn-secondary:hover:not(:disabled) {
+  border-color: var(--accent);
+}
+
+.btn:disabled,
+.btn[aria-disabled="true"] {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.btn[aria-disabled="true"] {
+  pointer-events: none;
+}
+
+a.btn {
+  text-decoration: none;
+}
+
+/* While generating, the label gives way to a small spinner, so nothing moves. */
+.btn.loading {
+  color: transparent;
+  opacity: 1;
+  cursor: progress;
+}
+
+.btn.loading::after {
+  content: "";
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Read out by screen readers only. */
+.status {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
 }
 
 footer {
-  color: #666;
-  padding: 20px;
+  font-size: 0.8125rem;
+  color: var(--muted);
   text-align: center;
-  margin-top: 30px;
-  font-size: 14px;
-}
-
-footer p {
-  margin: 0;
-  margin-bottom: 5px;
 }
 
 footer a {
-  color: #000;
+  color: var(--text);
   text-decoration: none;
 }
 
 footer a:hover {
   text-decoration: underline;
+}
+
+/* Artwork panel: a soft halo in the mandala's own colours, as if it were the light source. */
+
+.panel-output {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: 560px;
+  padding: var(--space-4) var(--space-4) var(--space-3);
+  background:
+    radial-gradient(circle at 50% 45%, var(--glow-0) 0%, transparent 38.2%),
+    radial-gradient(circle at 50% 45%, var(--glow-1) 0%, transparent 61.8%),
+    #000;
+  color: #fff;
+}
+
+.stage {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  max-width: 520px;
+}
+
+#visual-hash-canvas {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1;
+  visibility: hidden;
+  /* Black is no light at all: let the halo shine through, and add the mandala's light to it. */
+  mix-blend-mode: screen;
+}
+
+#visual-hash-canvas.visible {
+  visibility: visible;
+  cursor: pointer;
+}
+
+#visual-hash-canvas:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent) 60%, #fff);
+  outline-offset: 4px;
+  border-radius: 50%;
+}
+
+.placeholder {
+  position: absolute;
+  margin: 0;
+  padding: var(--space-3);
+  color: #8e8e93;
+  text-align: center;
+}
+
+/* The golden choices behind the image, in small italics under it. */
+.signature {
+  min-height: 1.5em;
+  margin: 0;
+  font-family: var(--serif);
+  font-size: 1rem;
+  font-style: italic;
+  color: rgba(255, 255, 255, 0.6);
+  text-align: center;
+  text-wrap: balance;
+}
+
+/* The visual hash's id, as it appears in its address. */
+.hash-id {
+  min-height: 1.5em;
+  margin: calc(-1 * var(--space-1)) 0 0;
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 0.8125rem;
+  letter-spacing: 0.08em;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+/* The player: play / pause, the drawing's timeline, sound, and saving the drawing as a video. */
+.player {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  max-width: 420px;
+}
+
+.player[hidden] {
+  display: none;
+}
+
+.icon-btn {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.06);
+  color: #fff;
+  cursor: pointer;
+  transition: background-color 0.15s, border-color 0.15s;
+}
+
+.icon-btn:hover:not(:disabled) {
+  border-color: rgba(255, 255, 255, 0.45);
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.icon-btn:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent) 60%, #fff);
+  outline-offset: 2px;
+}
+
+.icon-btn:disabled {
+  cursor: progress;
+}
+
+.icon-btn[hidden] {
+  display: none;
+}
+
+.icon-btn svg {
+  width: 16px;
+  height: 16px;
+  fill: currentColor;
+}
+
+.icon-btn svg .stroke {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+
+.icon-play,
+.paused .icon-pause,
+.icon-sound,
+.sound-on .icon-muted {
+  display: none;
+}
+
+.paused .icon-play,
+.sound-on .icon-sound {
+  display: block;
+}
+
+.sound-on #sound-btn {
+  border-color: color-mix(in srgb, var(--accent) 70%, #fff);
+}
+
+.recording #record-btn {
+  border-color: #ff453a;
+  color: #ff453a;
+  animation: pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  50% {
+    background: rgba(255, 69, 58, 0.25);
+  }
+}
+
+.scrubber {
+  flex: 1;
+  min-width: 0;
+  height: 34px;
+  margin: 0;
+  background: transparent;
+  accent-color: color-mix(in srgb, var(--accent) 50%, #fff);
+  cursor: pointer;
+}
+
+/* Tablet: a little tighter. */
+@media (max-width: 960px) {
+  .panel-form {
+    padding: var(--space-4) var(--space-3);
+  }
+}
+
+/* Phone: one column, the artwork first and as large as the screen allows. */
+@media (max-width: 760px) {
+  body {
+    align-items: flex-start;
+    padding: var(--space-2);
+  }
+
+  .card {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .panel-output {
+    order: -1;
+    min-height: 0;
+    padding: var(--space-2) var(--space-2) var(--space-3);
+  }
+
+  .panel-form {
+    gap: var(--space-3);
+    padding: var(--space-4) var(--space-3) var(--space-3);
+  }
+
+  h1 {
+    font-size: calc(1rem * var(--phi) * var(--phi) * 0.85);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btn,
+  .mark {
+    transition: none;
+  }
 }

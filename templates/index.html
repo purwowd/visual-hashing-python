@@ -2,56 +2,79 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Visual Hashing Python</title>
+    <meta name="color-scheme" content="light dark" />
+    <title>{% if hash %}{{ hash.id }} · {% endif %}Visual Hashing</title>
+    <meta name="description" content="Turn any name into its own golden-ratio mandala." />
+    {% if hash %}
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="A golden-ratio visual hash · {{ hash.id }}" />
+    <meta property="og:description" content="{{ hash.signature }}" />
+    <meta property="og:url" content="{{ share_url }}" />
+    <meta property="og:image" content="{{ image_url }}" />
+    <meta property="og:image:width" content="800" />
+    <meta property="og:image:height" content="800" />
+    <meta name="twitter:card" content="summary_large_image" />
+    {% endif %}
+    <link rel="preload" href="/static/fonts/cormorant-garamond-500.woff2" as="font" type="font/woff2" crossorigin />
     <link rel="stylesheet" href="/static/css/style.css" />
   </head>
-  <body>
-    <h1>Visual Hashing</h1>
-    <form action="/generate-plot" method="post">
-      <input type="text" id="name" name="name" required />
-      <div class="buttons-container">
-        <button class="generate" type="submit">Generate</button>
-        <button class="random-name" id="random-name-btn" type="button">
-          Random name
-        </button>
-        <span id="download-btn-container"></span>
-      </div>
-    </form>
-    <div class="img-container">
-      {% if image %}
-      <canvas
-        id="visual-hash-canvas"
-        data-image="{{ image }}"
-        data-name="{{ name }}"
-        width="400"
-        height="400"
-      ></canvas>
-      {% endif %}
-    </div>
+  <body{% if hash %} style="{% for key, value in hash.colours.items() %}--{{ key }}: {{ value }}; {% endfor %}"{% endif %}>
+    <main class="card">
+      <section class="panel-form">
+        <header>
+          <p class="mark" aria-hidden="true">φ</p>
+          <h1>Visual Hashing</h1>
+          <p class="subtitle">As the whole is to the greater, so is the greater to the lesser</p>
+        </header>
+
+        <form id="generate-form" class="controls" action="/" method="get">
+          <div class="field">
+            <label for="name">Your name</label>
+            <input type="text" id="name" name="name" value="" placeholder="e.g. Budi Santoso" maxlength="{{ max_name_length }}" autocomplete="off" required />
+          </div>
+
+          <div class="actions">
+            <button class="btn btn-primary" id="generate-btn" type="submit">Generate</button>
+            <button class="btn btn-secondary" id="random-name-btn" type="button">Random name</button>
+            <a class="btn btn-accent" id="save-btn" {% if hash %}href="/{{ hash.id }}.png?download=1" download="visual-hash-{{ hash.id }}.png"{% else %}aria-disabled="true"{% endif %}>Save image</a>
+            <button class="btn btn-secondary" id="share-btn" type="button" {% if not hash %}disabled{% endif %}>Share link</button>
+          </div>
+          <p class="status" id="status" role="status" aria-live="polite"></p>
+        </form>
+
+        <footer>
+          Created by
+          <a href="https://github.com/purwowd" target="_blank" rel="noopener noreferrer">@purwowd</a>
+        </footer>
+      </section>
+
+      <section class="panel-output">
+        <div class="stage">
+          <canvas id="visual-hash-canvas" data-hash='{{ hash | tojson }}' role="img" aria-label="{{ 'Visual hash ' ~ hash.id ~ '. Press to watch it being drawn.' if hash else 'Visual hash' }}" title="Click to watch it being drawn"></canvas>
+          <p class="placeholder"{% if hash %} hidden{% endif %}>Enter a name and press <strong>Generate</strong></p>
+        </div>
+
+        <p class="signature" id="signature">{{ hash.signature if hash else '' }}</p>
+        <p class="hash-id" id="hash-id">{{ hash.id if hash else '' }}</p>
+
+        <div class="player" id="player"{% if not hash %} hidden{% endif %}>
+          <button class="icon-btn" id="play-btn" type="button" aria-label="Pause">
+            <svg class="icon-pause" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1" /><rect x="14" y="5" width="4" height="14" rx="1" /></svg>
+            <svg class="icon-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.5-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z" /></svg>
+          </button>
+          <input class="scrubber" id="scrubber" type="range" min="0" max="1000" value="1000" aria-label="Drawing timeline" />
+          <button class="icon-btn" id="sound-btn" type="button" aria-label="Sound" aria-pressed="false">
+            <svg class="icon-muted" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z" /><path class="stroke" d="M17 9l4 6M21 9l-4 6" /></svg>
+            <svg class="icon-sound" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z" /><path class="stroke" d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12" /></svg>
+          </button>
+          <button class="icon-btn" id="record-btn" type="button" aria-label="Save the drawing as a video">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="6" width="13" height="12" rx="2" /><path d="M16 10.5l5-3v9l-5-3z" /></svg>
+          </button>
+        </div>
+      </section>
+    </main>
+    <script src="/static/js/light.js"></script>
     <script src="/static/js/main.js"></script>
-    <!-- Footer -->
-    <footer>
-      <p>
-        Created by
-        <a
-          href="https://github.com/purwowd"
-          target="_blank"
-          rel="noopener noreferrer"
-          >@purwowd</a
-        >
-      </p>
-      <p>
-        An implementation of
-        <a
-          href="https://github.com/gungunfebrianza/Visual-Hashing"
-          target="_blank"
-          rel="noopener noreferrer"
-          >Visual Hashing</a
-        >
-        using Python
-      </p>
-    </footer>
   </body>
 </html>
